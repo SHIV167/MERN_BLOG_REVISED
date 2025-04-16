@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+  }
+}
+
+/* Custom styles */
+.font-poppins {
+  font-family: 'Poppins', sans-serif;
+}
+
+.font-inter {
+  font-family: 'Inter', sans-serif;
+}
+
+.text-secondary {
+  color: #ff6b00;
+}
+
+.bg-secondary {
+  background-color: #ff6b00;
+}
+
+.hover\:bg-secondary:hover {
+  background-color: #ff6b00;
+}
+
+.hover\:bg-secondary\/90:hover {
+  background-color: rgba(255, 107, 0, 0.9);
+}
+
+.hover\:text-secondary:hover {
+  color: #ff6b00;
+}
+
+.bg-secondary\/90 {
+  background-color: rgba(255, 107, 0, 0.9);
+}
+
+.wave-divider {
+  height: 50px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 320'%3E%3Cpath fill='%236834cb' fill-opacity='1' d='M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,133.3C672,139,768,181,864,197.3C960,213,1056,203,1152,170.7C1248,139,1344,85,1392,58.7L1440,32L1440,320L1392,320C1344,320,1248,320,1152,320C1056,320,960,320,864,320C768,320,672,320,576,320C480,320,384,320,288,320C192,320,96,320,48,320L0,320Z'%3E%3C/path%3E%3C/svg%3E");
+  background-size: cover;
+  background-repeat: no-repeat;
+}
+
+.skill-circle {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  background: conic-gradient(#6834cb var(--percentage), #e2e8f0 var(--percentage) 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  margin: 0 auto;
+}
+
+.skill-circle::before {
+  content: "";
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: white;
+  border-radius: 50%;
+}
+
+.skill-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.box-shadow-custom {
+  box-shadow: 0 4px 20px rgba(104, 52, 203, 0.15);
+}
+
+.gradient-overlay {
+  background: linear-gradient(180deg, rgba(104, 52, 203, 0) 0%, rgba(104, 52, 203, 0.8) 100%);
+}
+
+.bg-light {
+  background-color: #f5f0ff;
+}
+
+.bg-accent {
+  background-color: #4cc9f0;
+}
