@@ -79,8 +79,18 @@ const documentToUser = (doc: IUser): User => {
 };
 
 const documentToProject = (doc: IProject): Project => {
+  let id = 0;
+  try {
+    if (doc._id) {
+      const idStr = doc._id.toString();
+      id = parseInt(idStr.substring(Math.max(0, idStr.length - 6)), 16) % 1000000;
+    }
+  } catch (error) {
+    console.error("Error converting project _id:", error);
+  }
+  
   return {
-    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
+    id,
     title: doc.title,
     description: doc.description,
     imageUrl: doc.imageUrl || null,
@@ -90,8 +100,18 @@ const documentToProject = (doc: IProject): Project => {
 };
 
 const documentToBlogPost = (doc: IBlogPost): BlogPost => {
+  let id = 0;
+  try {
+    if (doc._id) {
+      const idStr = doc._id.toString();
+      id = parseInt(idStr.substring(Math.max(0, idStr.length - 6)), 16) % 1000000;
+    }
+  } catch (error) {
+    console.error("Error converting blog post _id:", error);
+  }
+  
   return {
-    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
+    id,
     title: doc.title,
     content: doc.content,
     excerpt: doc.excerpt,
@@ -101,8 +121,18 @@ const documentToBlogPost = (doc: IBlogPost): BlogPost => {
 };
 
 const documentToYoutubeVideo = (doc: IYoutubeVideo): YoutubeVideo => {
+  let id = 0;
+  try {
+    if (doc._id) {
+      const idStr = doc._id.toString();
+      id = parseInt(idStr.substring(Math.max(0, idStr.length - 6)), 16) % 1000000;
+    }
+  } catch (error) {
+    console.error("Error converting video _id:", error);
+  }
+  
   return {
-    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
+    id,
     title: doc.title,
     description: doc.description,
     videoUrl: doc.videoUrl,
@@ -130,8 +160,18 @@ const documentToSkill = (doc: ISkill): Skill => {
 };
 
 const documentToContact = (doc: IContact): Contact => {
+  let id = 0;
+  try {
+    if (doc._id) {
+      const idStr = doc._id.toString();
+      id = parseInt(idStr.substring(Math.max(0, idStr.length - 6)), 16) % 1000000;
+    }
+  } catch (error) {
+    console.error("Error converting contact _id:", error);
+  }
+  
   return {
-    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
+    id,
     name: doc.name,
     email: doc.email,
     message: doc.message,
@@ -174,9 +214,32 @@ export class MongoDBStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     try {
-      const user = await UserModel.findById(id);
-      return user ? documentToUser(user) : undefined;
+      // Try to find by MongoDB _id first (in case it's a direct MongoDB ID)
+      try {
+        const userById = await UserModel.findById(id);
+        if (userById) {
+          console.log(`Found user by direct _id lookup: ${id}`);
+          return documentToUser(userById);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If that fails, find by the numeric id we generated
+      const users = await UserModel.find();
+      
+      for (const user of users) {
+        const userId = parseInt(user._id.toString().substring(Math.max(0, user._id.toString().length - 6)), 16) % 1000000;
+        if (userId === id) {
+          console.log(`Found user by numeric id match: ${id}`);
+          return documentToUser(user);
+        }
+      }
+      
+      console.log(`No user found with id: ${id}`);
+      return undefined;
     } catch (error) {
+      console.error('Error in getUser:', error);
       return undefined;
     }
   }
@@ -207,9 +270,32 @@ export class MongoDBStorage implements IStorage {
 
   async getProject(id: number): Promise<Project | undefined> {
     try {
-      const project = await ProjectModel.findById(id);
-      return project ? documentToProject(project) : undefined;
+      // Try to find by MongoDB _id first (in case it's a direct MongoDB ID)
+      try {
+        const projectById = await ProjectModel.findById(id);
+        if (projectById) {
+          console.log(`Found project by direct _id lookup: ${id}`);
+          return documentToProject(projectById);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If that fails, find by the numeric id we generated
+      const projects = await ProjectModel.find();
+      
+      for (const project of projects) {
+        const projectId = parseInt(project._id.toString().substring(Math.max(0, project._id.toString().length - 6)), 16) % 1000000;
+        if (projectId === id) {
+          console.log(`Found project by numeric id match: ${id}`);
+          return documentToProject(project);
+        }
+      }
+      
+      console.log(`No project found with id: ${id}`);
+      return undefined;
     } catch (error) {
+      console.error('Error in getProject:', error);
       return undefined;
     }
   }
@@ -248,9 +334,32 @@ export class MongoDBStorage implements IStorage {
 
   async getBlogPost(id: number): Promise<BlogPost | undefined> {
     try {
-      const post = await BlogPostModel.findById(id);
-      return post ? documentToBlogPost(post) : undefined;
+      // Try to find by MongoDB _id first (in case it's a direct MongoDB ID)
+      try {
+        const postById = await BlogPostModel.findById(id);
+        if (postById) {
+          console.log(`Found blog post by direct _id lookup: ${id}`);
+          return documentToBlogPost(postById);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If that fails, find by the numeric id we generated
+      const posts = await BlogPostModel.find();
+      
+      for (const post of posts) {
+        const postId = parseInt(post._id.toString().substring(Math.max(0, post._id.toString().length - 6)), 16) % 1000000;
+        if (postId === id) {
+          console.log(`Found blog post by numeric id match: ${id}`);
+          return documentToBlogPost(post);
+        }
+      }
+      
+      console.log(`No blog post found with id: ${id}`);
+      return undefined;
     } catch (error) {
+      console.error('Error in getBlogPost:', error);
       return undefined;
     }
   }
@@ -289,9 +398,32 @@ export class MongoDBStorage implements IStorage {
 
   async getYoutubeVideo(id: number): Promise<YoutubeVideo | undefined> {
     try {
-      const video = await YoutubeVideoModel.findById(id);
-      return video ? documentToYoutubeVideo(video) : undefined;
+      // Try to find by MongoDB _id first (in case it's a direct MongoDB ID)
+      try {
+        const videoById = await YoutubeVideoModel.findById(id);
+        if (videoById) {
+          console.log(`Found video by direct _id lookup: ${id}`);
+          return documentToYoutubeVideo(videoById);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If that fails, find by the numeric id we generated
+      const videos = await YoutubeVideoModel.find();
+      
+      for (const video of videos) {
+        const videoId = parseInt(video._id.toString().substring(Math.max(0, video._id.toString().length - 6)), 16) % 1000000;
+        if (videoId === id) {
+          console.log(`Found video by numeric id match: ${id}`);
+          return documentToYoutubeVideo(video);
+        }
+      }
+      
+      console.log(`No video found with id: ${id}`);
+      return undefined;
     } catch (error) {
+      console.error('Error in getYoutubeVideo:', error);
       return undefined;
     }
   }
