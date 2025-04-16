@@ -12,13 +12,20 @@ import { useQuery } from "@tanstack/react-query";
 import { logout } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 
+// Define the user type
+interface User {
+  id: number;
+  username: string;
+  isAdmin: boolean;
+}
+
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [location] = useLocation();
   const { toast } = useToast();
 
   // Check if user is authenticated
-  const { data: user } = useQuery({ 
+  const { data: user } = useQuery<User>({ 
     queryKey: ['/api/auth/me'],
   });
 
@@ -96,16 +103,29 @@ const Header = () => {
             <a href="#" className="bg-white/10 p-2 rounded-full hover:bg-white/20 transition-colors">
               <FaYoutube className="text-sm" />
             </a>
-            {user && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-white hover:text-secondary hover:bg-white/10"
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
-            )}
+            {user ? (
+              <>
+                {user.isAdmin && (
+                  <Link href="/admin">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-white hover:text-secondary hover:bg-white/10 mr-2"
+                    >
+                      Dashboard
+                    </Button>
+                  </Link>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:text-secondary hover:bg-white/10"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : null}
           </div>
           
           <button 
@@ -136,16 +156,23 @@ const Header = () => {
                 Admin
               </Link>
             )}
-            {user && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="text-white hover:bg-white/10 justify-start pl-4"
-                onClick={handleLogout}
-              >
-                Logout
-              </Button>
-            )}
+            {user ? (
+              <>
+                {user.isAdmin && (
+                  <Link href="/admin" className="py-2 px-4 hover:bg-white/10 rounded transition-colors">
+                    Dashboard
+                  </Link>
+                )}
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="text-white hover:bg-white/10 justify-start pl-4"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </Button>
+              </>
+            ) : null}
           </div>
           
           <div className="flex justify-center space-x-4 mt-4">
