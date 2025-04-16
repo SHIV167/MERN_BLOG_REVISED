@@ -307,13 +307,43 @@ export class MongoDBStorage implements IStorage {
 
   async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
     try {
-      const updatedProject = await ProjectModel.findByIdAndUpdate(
-        id,
-        { $set: project },
-        { new: true }
-      );
-      return updatedProject ? documentToProject(updatedProject) : undefined;
+      // Try to update by MongoDB _id first
+      try {
+        const updatedProject = await ProjectModel.findByIdAndUpdate(
+          id,
+          { $set: project },
+          { new: true }
+        );
+        if (updatedProject) {
+          console.log(`Updated project by direct _id: ${id}`);
+          return documentToProject(updatedProject);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct update fails, find the document first by computed id
+      const projects = await ProjectModel.find();
+      
+      for (const projectDoc of projects) {
+        const projectId = parseInt(projectDoc._id.toString().substring(Math.max(0, projectDoc._id.toString().length - 6)), 16) % 1000000;
+        if (projectId === id) {
+          console.log(`Found project by numeric id match: ${id}, updating with MongoDB _id: ${projectDoc._id}`);
+          
+          const updatedProject = await ProjectModel.findByIdAndUpdate(
+            projectDoc._id,
+            { $set: project },
+            { new: true }
+          );
+          
+          return updatedProject ? documentToProject(updatedProject) : undefined;
+        }
+      }
+      
+      console.log(`No project found with id: ${id} for update`);
+      return undefined;
     } catch (error) {
+      console.error('Error in updateProject:', error);
       return undefined;
     }
   }
@@ -371,22 +401,76 @@ export class MongoDBStorage implements IStorage {
 
   async updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost | undefined> {
     try {
-      const updatedPost = await BlogPostModel.findByIdAndUpdate(
-        id,
-        { $set: post },
-        { new: true }
-      );
-      return updatedPost ? documentToBlogPost(updatedPost) : undefined;
+      // Try to update by MongoDB _id first
+      try {
+        const updatedPost = await BlogPostModel.findByIdAndUpdate(
+          id,
+          { $set: post },
+          { new: true }
+        );
+        if (updatedPost) {
+          console.log(`Updated blog post by direct _id: ${id}`);
+          return documentToBlogPost(updatedPost);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct update fails, find the document first by computed id
+      const posts = await BlogPostModel.find();
+      
+      for (const postDoc of posts) {
+        const postId = parseInt(postDoc._id.toString().substring(Math.max(0, postDoc._id.toString().length - 6)), 16) % 1000000;
+        if (postId === id) {
+          console.log(`Found blog post by numeric id match: ${id}, updating with MongoDB _id: ${postDoc._id}`);
+          
+          const updatedPost = await BlogPostModel.findByIdAndUpdate(
+            postDoc._id,
+            { $set: post },
+            { new: true }
+          );
+          
+          return updatedPost ? documentToBlogPost(updatedPost) : undefined;
+        }
+      }
+      
+      console.log(`No blog post found with id: ${id} for update`);
+      return undefined;
     } catch (error) {
+      console.error('Error in updateBlogPost:', error);
       return undefined;
     }
   }
 
   async deleteBlogPost(id: number): Promise<boolean> {
     try {
-      await BlogPostModel.findByIdAndDelete(id);
-      return true;
+      // Try to delete by MongoDB _id first
+      try {
+        const result = await BlogPostModel.findByIdAndDelete(id);
+        if (result) {
+          console.log(`Deleted blog post by direct _id: ${id}`);
+          return true;
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct deletion fails, find the document first by computed id
+      const posts = await BlogPostModel.find();
+      
+      for (const postDoc of posts) {
+        const postId = parseInt(postDoc._id.toString().substring(Math.max(0, postDoc._id.toString().length - 6)), 16) % 1000000;
+        if (postId === id) {
+          console.log(`Found blog post by numeric id match: ${id}, deleting with MongoDB _id: ${postDoc._id}`);
+          await BlogPostModel.findByIdAndDelete(postDoc._id);
+          return true;
+        }
+      }
+      
+      console.log(`No blog post found with id: ${id} for deletion`);
+      return false;
     } catch (error) {
+      console.error('Error in deleteBlogPost:', error);
       return false;
     }
   }
@@ -435,22 +519,76 @@ export class MongoDBStorage implements IStorage {
 
   async updateYoutubeVideo(id: number, video: Partial<InsertYoutubeVideo>): Promise<YoutubeVideo | undefined> {
     try {
-      const updatedVideo = await YoutubeVideoModel.findByIdAndUpdate(
-        id,
-        { $set: video },
-        { new: true }
-      );
-      return updatedVideo ? documentToYoutubeVideo(updatedVideo) : undefined;
+      // Try to update by MongoDB _id first
+      try {
+        const updatedVideo = await YoutubeVideoModel.findByIdAndUpdate(
+          id,
+          { $set: video },
+          { new: true }
+        );
+        if (updatedVideo) {
+          console.log(`Updated video by direct _id: ${id}`);
+          return documentToYoutubeVideo(updatedVideo);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct update fails, find the document first by computed id
+      const videos = await YoutubeVideoModel.find();
+      
+      for (const videoDoc of videos) {
+        const videoId = parseInt(videoDoc._id.toString().substring(Math.max(0, videoDoc._id.toString().length - 6)), 16) % 1000000;
+        if (videoId === id) {
+          console.log(`Found video by numeric id match: ${id}, updating with MongoDB _id: ${videoDoc._id}`);
+          
+          const updatedVideo = await YoutubeVideoModel.findByIdAndUpdate(
+            videoDoc._id,
+            { $set: video },
+            { new: true }
+          );
+          
+          return updatedVideo ? documentToYoutubeVideo(updatedVideo) : undefined;
+        }
+      }
+      
+      console.log(`No video found with id: ${id} for update`);
+      return undefined;
     } catch (error) {
+      console.error('Error in updateYoutubeVideo:', error);
       return undefined;
     }
   }
 
   async deleteYoutubeVideo(id: number): Promise<boolean> {
     try {
-      await YoutubeVideoModel.findByIdAndDelete(id);
-      return true;
+      // Try to delete by MongoDB _id first
+      try {
+        const result = await YoutubeVideoModel.findByIdAndDelete(id);
+        if (result) {
+          console.log(`Deleted video by direct _id: ${id}`);
+          return true;
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct deletion fails, find the document first by computed id
+      const videos = await YoutubeVideoModel.find();
+      
+      for (const videoDoc of videos) {
+        const videoId = parseInt(videoDoc._id.toString().substring(Math.max(0, videoDoc._id.toString().length - 6)), 16) % 1000000;
+        if (videoId === id) {
+          console.log(`Found video by numeric id match: ${id}, deleting with MongoDB _id: ${videoDoc._id}`);
+          await YoutubeVideoModel.findByIdAndDelete(videoDoc._id);
+          return true;
+        }
+      }
+      
+      console.log(`No video found with id: ${id} for deletion`);
+      return false;
     } catch (error) {
+      console.error('Error in deleteYoutubeVideo:', error);
       return false;
     }
   }
@@ -476,22 +614,76 @@ export class MongoDBStorage implements IStorage {
 
   async updateSkill(id: number, skill: Partial<InsertSkill>): Promise<Skill | undefined> {
     try {
-      const updatedSkill = await SkillModel.findByIdAndUpdate(
-        id,
-        { $set: skill },
-        { new: true }
-      );
-      return updatedSkill ? documentToSkill(updatedSkill) : undefined;
+      // Try to update by MongoDB _id first
+      try {
+        const updatedSkill = await SkillModel.findByIdAndUpdate(
+          id,
+          { $set: skill },
+          { new: true }
+        );
+        if (updatedSkill) {
+          console.log(`Updated skill by direct _id: ${id}`);
+          return documentToSkill(updatedSkill);
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+
+      // If direct update fails, find the document first by computed id
+      const skills = await SkillModel.find();
+      
+      for (const skillDoc of skills) {
+        const skillId = parseInt(skillDoc._id.toString().substring(Math.max(0, skillDoc._id.toString().length - 6)), 16) % 1000000;
+        if (skillId === id) {
+          console.log(`Found skill by numeric id match: ${id}, updating with MongoDB _id: ${skillDoc._id}`);
+          
+          const updatedSkill = await SkillModel.findByIdAndUpdate(
+            skillDoc._id,
+            { $set: skill },
+            { new: true }
+          );
+          
+          return updatedSkill ? documentToSkill(updatedSkill) : undefined;
+        }
+      }
+      
+      console.log(`No skill found with id: ${id} for update`);
+      return undefined;
     } catch (error) {
+      console.error('Error in updateSkill:', error);
       return undefined;
     }
   }
 
   async deleteSkill(id: number): Promise<boolean> {
     try {
-      await SkillModel.findByIdAndDelete(id);
-      return true;
+      // Try to delete by MongoDB _id first
+      try {
+        const result = await SkillModel.findByIdAndDelete(id);
+        if (result) {
+          console.log(`Deleted skill by direct _id: ${id}`);
+          return true;
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct deletion fails, find the document first by computed id
+      const skills = await SkillModel.find();
+      
+      for (const skillDoc of skills) {
+        const skillId = parseInt(skillDoc._id.toString().substring(Math.max(0, skillDoc._id.toString().length - 6)), 16) % 1000000;
+        if (skillId === id) {
+          console.log(`Found skill by numeric id match: ${id}, deleting with MongoDB _id: ${skillDoc._id}`);
+          await SkillModel.findByIdAndDelete(skillDoc._id);
+          return true;
+        }
+      }
+      
+      console.log(`No skill found with id: ${id} for deletion`);
+      return false;
     } catch (error) {
+      console.error('Error in deleteSkill:', error);
       return false;
     }
   }
@@ -508,18 +700,66 @@ export class MongoDBStorage implements IStorage {
 
   async markContactAsRead(id: number): Promise<boolean> {
     try {
-      await ContactModel.findByIdAndUpdate(id, { isRead: true });
-      return true;
+      // Try to update by MongoDB _id first
+      try {
+        const result = await ContactModel.findByIdAndUpdate(id, { isRead: true });
+        if (result) {
+          console.log(`Marked contact as read by direct _id: ${id}`);
+          return true;
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct update fails, find the document first by computed id
+      const contacts = await ContactModel.find();
+      
+      for (const contactDoc of contacts) {
+        const contactId = parseInt(contactDoc._id.toString().substring(Math.max(0, contactDoc._id.toString().length - 6)), 16) % 1000000;
+        if (contactId === id) {
+          console.log(`Found contact by numeric id match: ${id}, marking as read with MongoDB _id: ${contactDoc._id}`);
+          await ContactModel.findByIdAndUpdate(contactDoc._id, { isRead: true });
+          return true;
+        }
+      }
+      
+      console.log(`No contact found with id: ${id} for marking as read`);
+      return false;
     } catch (error) {
+      console.error('Error in markContactAsRead:', error);
       return false;
     }
   }
 
   async deleteContact(id: number): Promise<boolean> {
     try {
-      await ContactModel.findByIdAndDelete(id);
-      return true;
+      // Try to delete by MongoDB _id first
+      try {
+        const result = await ContactModel.findByIdAndDelete(id);
+        if (result) {
+          console.log(`Deleted contact by direct _id: ${id}`);
+          return true;
+        }
+      } catch (err) {
+        // Ignore errors with direct _id lookup
+      }
+      
+      // If direct deletion fails, find the document first by computed id
+      const contacts = await ContactModel.find();
+      
+      for (const contactDoc of contacts) {
+        const contactId = parseInt(contactDoc._id.toString().substring(Math.max(0, contactDoc._id.toString().length - 6)), 16) % 1000000;
+        if (contactId === id) {
+          console.log(`Found contact by numeric id match: ${id}, deleting with MongoDB _id: ${contactDoc._id}`);
+          await ContactModel.findByIdAndDelete(contactDoc._id);
+          return true;
+        }
+      }
+      
+      console.log(`No contact found with id: ${id} for deletion`);
+      return false;
     } catch (error) {
+      console.error('Error in deleteContact:', error);
       return false;
     }
   }
