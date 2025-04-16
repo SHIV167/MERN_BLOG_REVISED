@@ -59,8 +59,19 @@ export interface IStorage {
 
 // Helper functions to convert MongoDB documents to schema types
 const documentToUser = (doc: IUser): User => {
+  let id = 0;
+  try {
+    if (doc._id) {
+      const idStr = doc._id.toString();
+      id = parseInt(idStr.substring(Math.max(0, idStr.length - 6)), 16) % 1000000;
+      console.log("Converted user ID:", doc._id, "to numeric ID:", id);
+    }
+  } catch (error) {
+    console.error("Error converting user _id:", error);
+  }
+  
   return {
-    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
+    id,
     username: doc.username,
     password: doc.password,
     isAdmin: doc.isAdmin
@@ -100,8 +111,18 @@ const documentToYoutubeVideo = (doc: IYoutubeVideo): YoutubeVideo => {
 };
 
 const documentToSkill = (doc: ISkill): Skill => {
+  let id = 0;
+  try {
+    if (doc._id) {
+      const idStr = doc._id.toString();
+      id = parseInt(idStr.substring(Math.max(0, idStr.length - 6)), 16) % 1000000;
+    }
+  } catch (error) {
+    console.error("Error converting skill _id:", error);
+  }
+  
   return {
-    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    id,
     name: doc.name,
     percentage: doc.percentage,
     category: doc.category,
@@ -110,7 +131,7 @@ const documentToSkill = (doc: ISkill): Skill => {
 
 const documentToContact = (doc: IContact): Contact => {
   return {
-    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
     name: doc.name,
     email: doc.email,
     message: doc.message,
@@ -304,7 +325,11 @@ export class MongoDBStorage implements IStorage {
 
   async getAllSkills(): Promise<Skill[]> {
     const skills = await SkillModel.find();
-    return skills.map(documentToSkill);
+    console.log("SKILLS FOUND:", skills);
+    return skills.map(skill => {
+      console.log("SKILL DOC:", JSON.stringify(skill));
+      return documentToSkill(skill);
+    });
   }
 
   async getSkillsByCategory(category: string): Promise<Skill[]> {
