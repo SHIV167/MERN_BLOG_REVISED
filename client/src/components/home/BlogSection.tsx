@@ -59,7 +59,9 @@ const BlogSection = () => {
                   <p className="text-gray-600 mb-4">{post.excerpt}</p>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500 text-sm">
-                      {format(new Date(post.createdAt), 'MMMM d, yyyy')}
+                      {post.createdAt && !isNaN(new Date(post.createdAt).getTime())
+                        ? format(new Date(post.createdAt), 'MMMM d, yyyy')
+                        : 'N/A'}
                     </span>
                     <Link 
                       href={`/blog/${post.id}`} 
