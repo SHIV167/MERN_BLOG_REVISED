@@ -60,7 +60,7 @@ export interface IStorage {
 // Helper functions to convert MongoDB documents to schema types
 const documentToUser = (doc: IUser): User => {
   return {
-    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
     username: doc.username,
     password: doc.password,
     isAdmin: doc.isAdmin
@@ -69,7 +69,7 @@ const documentToUser = (doc: IUser): User => {
 
 const documentToProject = (doc: IProject): Project => {
   return {
-    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
     title: doc.title,
     description: doc.description,
     imageUrl: doc.imageUrl || null,
@@ -80,7 +80,7 @@ const documentToProject = (doc: IProject): Project => {
 
 const documentToBlogPost = (doc: IBlogPost): BlogPost => {
   return {
-    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
     title: doc.title,
     content: doc.content,
     excerpt: doc.excerpt,
@@ -91,7 +91,7 @@ const documentToBlogPost = (doc: IBlogPost): BlogPost => {
 
 const documentToYoutubeVideo = (doc: IYoutubeVideo): YoutubeVideo => {
   return {
-    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    id: parseInt(doc._id.toString().substring(doc._id.toString().length - 6), 16) % 1000000,
     title: doc.title,
     description: doc.description,
     videoUrl: doc.videoUrl,

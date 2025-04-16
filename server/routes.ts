@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
 import MemoryStore from "memorystore";
+import bcrypt from "bcryptjs";
 
 // Add userId to express-session
 declare module "express-session" {
@@ -79,7 +80,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const user = await storage.getUserByUsername(username);
       
-      if (!user || user.password !== password) { // In real app, use password hashing
+      if (!user) {
+        return res.status(401).json({ message: "Invalid credentials" });
+      }
+      
+      // Verify password with bcrypt
+      const isMatch = await bcrypt.compare(password, user.password);
+      if (!isMatch) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
       
