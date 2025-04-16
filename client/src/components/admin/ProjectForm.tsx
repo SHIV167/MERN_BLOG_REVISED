@@ -44,6 +44,19 @@ const ProjectForm = ({ project, onSuccess }: ProjectFormProps) => {
       technologies: project?.technologies || [],
     },
   });
+  
+  // Update form values when project changes (fixes edit mode)
+  useEffect(() => {
+    if (project) {
+      form.reset({
+        title: project.title || "",
+        description: project.description || "",
+        imageUrl: project.imageUrl || "",
+        projectUrl: project.projectUrl || "",
+        technologies: project.technologies || [],
+      });
+    }
+  }, [project, form]);
 
   // Create/update project mutation
   const projectMutation = useMutation({

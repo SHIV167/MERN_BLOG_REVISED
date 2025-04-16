@@ -3,7 +3,14 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import session from "express-session";
 import MemoryStore from "memorystore";
-import { insertUserSchema, insertProjectSchema, insertBlogPostSchema, insertYoutubeVideoSchema, insertSkillSchema, insertContactSchema } from "@shared/schema";
+
+// Add userId to express-session
+declare module "express-session" {
+  interface SessionData {
+    userId: number;
+  }
+}
+import { InsertUserSchema, InsertProjectSchema, InsertBlogPostSchema, InsertYoutubeVideoSchema, InsertSkillSchema, InsertContactSchema } from "@shared/schema";
 import { ZodError } from "zod";
 import { fromZodError } from "zod-validation-error";
 
@@ -143,7 +150,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/projects", requireAdmin, validateRequest(insertProjectSchema), async (req, res) => {
+  app.post("/api/projects", requireAdmin, validateRequest(InsertProjectSchema), async (req, res) => {
     try {
       const project = await storage.createProject(req.body);
       return res.status(201).json(project);
@@ -216,7 +223,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/blog-posts", requireAdmin, validateRequest(insertBlogPostSchema), async (req, res) => {
+  app.post("/api/blog-posts", requireAdmin, validateRequest(InsertBlogPostSchema), async (req, res) => {
     try {
       const post = await storage.createBlogPost(req.body);
       return res.status(201).json(post);
@@ -289,7 +296,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/youtube-videos", requireAdmin, validateRequest(insertYoutubeVideoSchema), async (req, res) => {
+  app.post("/api/youtube-videos", requireAdmin, validateRequest(InsertYoutubeVideoSchema), async (req, res) => {
     try {
       const video = await storage.createYoutubeVideo(req.body);
       return res.status(201).json(video);
@@ -351,7 +358,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/skills", requireAdmin, validateRequest(insertSkillSchema), async (req, res) => {
+  app.post("/api/skills", requireAdmin, validateRequest(InsertSkillSchema), async (req, res) => {
     try {
       const skill = await storage.createSkill(req.body);
       return res.status(201).json(skill);
@@ -397,7 +404,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Contact Routes
-  app.post("/api/contacts", validateRequest(insertContactSchema), async (req, res) => {
+  app.post("/api/contacts", validateRequest(InsertContactSchema), async (req, res) => {
     try {
       const contact = await storage.createContact(req.body);
       return res.status(201).json(contact);

@@ -1,13 +1,13 @@
-import { 
-  users, type User, type InsertUser,
-  projects, type Project, type InsertProject,
-  blogPosts, type BlogPost, type InsertBlogPost,
-  youtubeVideos, type YoutubeVideo, type InsertYoutubeVideo,
-  skills, type Skill, type InsertSkill,
-  contacts, type Contact, type InsertContact
-} from "@shared/schema";
+import { User, InsertUser, Project, InsertProject, BlogPost, InsertBlogPost, YoutubeVideo, InsertYoutubeVideo, Skill, InsertSkill, Contact, InsertContact } from "@shared/schema";
+import UserModel, { IUser } from "./models/User";
+import ProjectModel, { IProject } from "./models/Project";
+import BlogPostModel, { IBlogPost } from "./models/BlogPost";
+import YoutubeVideoModel, { IYoutubeVideo } from "./models/YoutubeVideo";
+import SkillModel, { ISkill } from "./models/Skill";
+import ContactModel, { IContact } from "./models/Contact";
+import bcrypt from "bcryptjs";
+import mongoose from "mongoose";
 
-// Storage interface
 export interface IStorage {
   // Users
   getUser(id: number): Promise<User | undefined>;
@@ -57,270 +57,336 @@ export interface IStorage {
   }>;
 }
 
-export class MemStorage implements IStorage {
-  private users: Map<number, User>;
-  private projects: Map<number, Project>;
-  private blogPosts: Map<number, BlogPost>;
-  private youtubeVideos: Map<number, YoutubeVideo>;
-  private skills: Map<number, Skill>;
-  private contacts: Map<number, Contact>;
-  
-  private currentUserId: number = 1;
-  private currentProjectId: number = 1;
-  private currentBlogPostId: number = 1;
-  private currentYoutubeVideoId: number = 1;
-  private currentSkillId: number = 1;
-  private currentContactId: number = 1;
+// Helper functions to convert MongoDB documents to schema types
+const documentToUser = (doc: IUser): User => {
+  return {
+    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    username: doc.username,
+    password: doc.password,
+    isAdmin: doc.isAdmin
+  };
+};
 
+const documentToProject = (doc: IProject): Project => {
+  return {
+    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    title: doc.title,
+    description: doc.description,
+    imageUrl: doc.imageUrl || null,
+    projectUrl: doc.projectUrl || null,
+    technologies: doc.technologies || null,
+  };
+};
+
+const documentToBlogPost = (doc: IBlogPost): BlogPost => {
+  return {
+    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    title: doc.title,
+    content: doc.content,
+    excerpt: doc.excerpt,
+    imageUrl: doc.imageUrl || null,
+    category: doc.category,
+  };
+};
+
+const documentToYoutubeVideo = (doc: IYoutubeVideo): YoutubeVideo => {
+  return {
+    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    title: doc.title,
+    description: doc.description,
+    videoUrl: doc.videoUrl,
+    thumbnailUrl: doc.thumbnailUrl || null,
+  };
+};
+
+const documentToSkill = (doc: ISkill): Skill => {
+  return {
+    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    name: doc.name,
+    percentage: doc.percentage,
+    category: doc.category,
+  };
+};
+
+const documentToContact = (doc: IContact): Contact => {
+  return {
+    id: Number(doc._id ? doc._id.toString().slice(-6) : 0),
+    name: doc.name,
+    email: doc.email,
+    message: doc.message,
+    isRead: doc.isRead,
+  };
+};
+
+export class MongoDBStorage implements IStorage {
   constructor() {
-    this.users = new Map();
-    this.projects = new Map();
-    this.blogPosts = new Map();
-    this.youtubeVideos = new Map();
-    this.skills = new Map();
-    this.contacts = new Map();
-
-    // Initialize with admin user
-    this.createUser({
-      username: "admin",
-      password: "admin123", // In a real app, this would be hashed
-      isAdmin: true
-    });
-
-    // Initialize some sample data
     this.initSampleData();
   }
 
-  private initSampleData() {
-    // Sample skills
-    const skillCategories = ["frontend", "backend", "additional"];
-    const skillNames = {
-      frontend: ["React", "JavaScript", "HTML/CSS", "Tailwind"],
-      backend: ["Node.js", "Express", "MongoDB", "REST API"],
-      additional: ["Git", "React Native", "TypeScript", "Responsive Design"]
-    };
-
-    // Create skills
-    skillCategories.forEach(category => {
-      skillNames[category as keyof typeof skillNames].forEach(name => {
-        const percentage = Math.floor(Math.random() * 20) + 75; // 75-95
-        this.createSkill({
-          name,
-          percentage,
-          category
-        });
+  private async initSampleData() {
+    // Create admin user if none exists
+    const adminExists = await UserModel.findOne({ username: "admin" });
+    if (!adminExists) {
+      const hashedPassword = await bcrypt.hash("admin123", 10);
+      await UserModel.create({
+        username: "admin",
+        password: hashedPassword,
+        isAdmin: true
       });
-    });
+    }
+
+    // Add sample skills if none exist
+    const skillsExist = await SkillModel.countDocuments();
+    if (skillsExist === 0) {
+      await SkillModel.insertMany([
+        { name: "React", percentage: 85, category: "frontend" },
+        { name: "TypeScript", percentage: 80, category: "frontend" },
+        { name: "Node.js", percentage: 75, category: "backend" },
+        { name: "MongoDB", percentage: 70, category: "backend" },
+        { name: "CSS/SCSS", percentage: 90, category: "frontend" },
+        { name: "Docker", percentage: 65, category: "devops" },
+        { name: "AWS", percentage: 60, category: "devops" },
+        { name: "Python", percentage: 75, category: "backend" },
+      ]);
+    }
   }
 
-  // User methods
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    try {
+      const user = await UserModel.findById(id);
+      return user ? documentToUser(user) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    try {
+      const user = await UserModel.findOne({ username });
+      return user ? documentToUser(user) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user = { ...insertUser, id };
-    this.users.set(id, user);
-    return user;
+    const hashedPassword = await bcrypt.hash(insertUser.password, 10);
+    const user = await UserModel.create({
+      username: insertUser.username,
+      password: hashedPassword,
+      isAdmin: insertUser.isAdmin || false
+    });
+    return documentToUser(user);
   }
 
-  // Project methods
   async getAllProjects(): Promise<Project[]> {
-    return Array.from(this.projects.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const projects = await ProjectModel.find().sort({ createdAt: -1 });
+    return projects.map(documentToProject);
   }
 
   async getProject(id: number): Promise<Project | undefined> {
-    return this.projects.get(id);
+    try {
+      const project = await ProjectModel.findById(id);
+      return project ? documentToProject(project) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async createProject(project: InsertProject): Promise<Project> {
-    const id = this.currentProjectId++;
-    const newProject = { 
-      ...project, 
-      id, 
-      createdAt: new Date() 
-    };
-    this.projects.set(id, newProject);
-    return newProject;
+    const newProject = await ProjectModel.create(project);
+    return documentToProject(newProject);
   }
 
   async updateProject(id: number, project: Partial<InsertProject>): Promise<Project | undefined> {
-    const existingProject = this.projects.get(id);
-    if (!existingProject) return undefined;
-
-    const updatedProject = { ...existingProject, ...project };
-    this.projects.set(id, updatedProject);
-    return updatedProject;
+    try {
+      const updatedProject = await ProjectModel.findByIdAndUpdate(
+        id,
+        { $set: project },
+        { new: true }
+      );
+      return updatedProject ? documentToProject(updatedProject) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async deleteProject(id: number): Promise<boolean> {
-    return this.projects.delete(id);
+    try {
+      await ProjectModel.findByIdAndDelete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  // Blog Post methods
   async getAllBlogPosts(): Promise<BlogPost[]> {
-    return Array.from(this.blogPosts.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const posts = await BlogPostModel.find().sort({ createdAt: -1 });
+    return posts.map(documentToBlogPost);
   }
 
   async getBlogPost(id: number): Promise<BlogPost | undefined> {
-    return this.blogPosts.get(id);
+    try {
+      const post = await BlogPostModel.findById(id);
+      return post ? documentToBlogPost(post) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
-    const id = this.currentBlogPostId++;
-    const now = new Date();
-    const newPost = { 
-      ...post, 
-      id, 
-      createdAt: now,
-      updatedAt: now
-    };
-    this.blogPosts.set(id, newPost);
-    return newPost;
+    const newPost = await BlogPostModel.create(post);
+    return documentToBlogPost(newPost);
   }
 
   async updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost | undefined> {
-    const existingPost = this.blogPosts.get(id);
-    if (!existingPost) return undefined;
-
-    const updatedPost = { 
-      ...existingPost, 
-      ...post,
-      updatedAt: new Date()
-    };
-    this.blogPosts.set(id, updatedPost);
-    return updatedPost;
+    try {
+      const updatedPost = await BlogPostModel.findByIdAndUpdate(
+        id,
+        { $set: post },
+        { new: true }
+      );
+      return updatedPost ? documentToBlogPost(updatedPost) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async deleteBlogPost(id: number): Promise<boolean> {
-    return this.blogPosts.delete(id);
+    try {
+      await BlogPostModel.findByIdAndDelete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  // YouTube Video methods
   async getAllYoutubeVideos(): Promise<YoutubeVideo[]> {
-    return Array.from(this.youtubeVideos.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const videos = await YoutubeVideoModel.find().sort({ createdAt: -1 });
+    return videos.map(documentToYoutubeVideo);
   }
 
   async getYoutubeVideo(id: number): Promise<YoutubeVideo | undefined> {
-    return this.youtubeVideos.get(id);
+    try {
+      const video = await YoutubeVideoModel.findById(id);
+      return video ? documentToYoutubeVideo(video) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async createYoutubeVideo(video: InsertYoutubeVideo): Promise<YoutubeVideo> {
-    const id = this.currentYoutubeVideoId++;
-    const newVideo = { 
-      ...video, 
-      id, 
-      createdAt: new Date() 
-    };
-    this.youtubeVideos.set(id, newVideo);
-    return newVideo;
+    const newVideo = await YoutubeVideoModel.create(video);
+    return documentToYoutubeVideo(newVideo);
   }
 
   async updateYoutubeVideo(id: number, video: Partial<InsertYoutubeVideo>): Promise<YoutubeVideo | undefined> {
-    const existingVideo = this.youtubeVideos.get(id);
-    if (!existingVideo) return undefined;
-
-    const updatedVideo = { ...existingVideo, ...video };
-    this.youtubeVideos.set(id, updatedVideo);
-    return updatedVideo;
+    try {
+      const updatedVideo = await YoutubeVideoModel.findByIdAndUpdate(
+        id,
+        { $set: video },
+        { new: true }
+      );
+      return updatedVideo ? documentToYoutubeVideo(updatedVideo) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async deleteYoutubeVideo(id: number): Promise<boolean> {
-    return this.youtubeVideos.delete(id);
+    try {
+      await YoutubeVideoModel.findByIdAndDelete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  // Skills methods
   async getAllSkills(): Promise<Skill[]> {
-    return Array.from(this.skills.values());
+    const skills = await SkillModel.find();
+    return skills.map(documentToSkill);
   }
 
   async getSkillsByCategory(category: string): Promise<Skill[]> {
-    return Array.from(this.skills.values()).filter(skill => skill.category === category);
+    const skills = await SkillModel.find({ category });
+    return skills.map(documentToSkill);
   }
 
   async createSkill(skill: InsertSkill): Promise<Skill> {
-    const id = this.currentSkillId++;
-    const newSkill = { ...skill, id };
-    this.skills.set(id, newSkill);
-    return newSkill;
+    const newSkill = await SkillModel.create(skill);
+    return documentToSkill(newSkill);
   }
 
   async updateSkill(id: number, skill: Partial<InsertSkill>): Promise<Skill | undefined> {
-    const existingSkill = this.skills.get(id);
-    if (!existingSkill) return undefined;
-
-    const updatedSkill = { ...existingSkill, ...skill };
-    this.skills.set(id, updatedSkill);
-    return updatedSkill;
+    try {
+      const updatedSkill = await SkillModel.findByIdAndUpdate(
+        id,
+        { $set: skill },
+        { new: true }
+      );
+      return updatedSkill ? documentToSkill(updatedSkill) : undefined;
+    } catch (error) {
+      return undefined;
+    }
   }
 
   async deleteSkill(id: number): Promise<boolean> {
-    return this.skills.delete(id);
+    try {
+      await SkillModel.findByIdAndDelete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  // Contact methods
   async getAllContacts(): Promise<Contact[]> {
-    return Array.from(this.contacts.values()).sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+    const contacts = await ContactModel.find().sort({ createdAt: -1 });
+    return contacts.map(documentToContact);
   }
 
   async createContact(contact: InsertContact): Promise<Contact> {
-    const id = this.currentContactId++;
-    const newContact = { 
-      ...contact, 
-      id, 
-      createdAt: new Date(),
-      isRead: false
-    };
-    this.contacts.set(id, newContact);
-    return newContact;
+    const newContact = await ContactModel.create(contact);
+    return documentToContact(newContact);
   }
 
   async markContactAsRead(id: number): Promise<boolean> {
-    const contact = this.contacts.get(id);
-    if (!contact) return false;
-
-    contact.isRead = true;
-    this.contacts.set(id, contact);
-    return true;
+    try {
+      await ContactModel.findByIdAndUpdate(id, { isRead: true });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   async deleteContact(id: number): Promise<boolean> {
-    return this.contacts.delete(id);
+    try {
+      await ContactModel.findByIdAndDelete(id);
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
-  // Dashboard stats
   async getDashboardStats(): Promise<{
     projectCount: number;
     blogPostCount: number;
     videoCount: number;
     unreadContactCount: number;
   }> {
-    const unreadContactCount = Array.from(this.contacts.values()).filter(
-      contact => !contact.isRead
-    ).length;
+    const [projectCount, blogPostCount, videoCount, unreadContactCount] = await Promise.all([
+      ProjectModel.countDocuments(),
+      BlogPostModel.countDocuments(),
+      YoutubeVideoModel.countDocuments(),
+      ContactModel.countDocuments({ isRead: false }),
+    ]);
 
     return {
-      projectCount: this.projects.size,
-      blogPostCount: this.blogPosts.size,
-      videoCount: this.youtubeVideos.size,
-      unreadContactCount
+      projectCount,
+      blogPostCount,
+      videoCount,
+      unreadContactCount,
     };
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new MongoDBStorage();

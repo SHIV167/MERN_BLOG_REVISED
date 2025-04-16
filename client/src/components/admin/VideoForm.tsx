@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,6 +42,18 @@ const VideoForm = ({ video, onSuccess }: VideoFormProps) => {
       videoUrl: video?.videoUrl || "",
     },
   });
+
+  // Update form values when video changes (fixes edit mode)
+  useEffect(() => {
+    if (video) {
+      form.reset({
+        title: video.title || "",
+        description: video.description || "",
+        thumbnailUrl: video.thumbnailUrl || "",
+        videoUrl: video.videoUrl || "",
+      });
+    }
+  }, [video, form]);
 
   // Create/update YouTube video mutation
   const videoMutation = useMutation({
