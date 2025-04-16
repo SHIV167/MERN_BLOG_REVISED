@@ -11,11 +11,20 @@ import AdminDashboardPage from "@/pages/AdminDashboardPage";
 import AdminProjectsPage from "@/pages/AdminProjectsPage";
 import AdminBlogPage from "@/pages/AdminBlogPage";
 import AdminVideosPage from "@/pages/AdminVideosPage";
+import AdminMessagesPage from "@/pages/AdminMessagesPage";
+import AdminSettingsPage from "@/pages/AdminSettingsPage";
 import NotFound from "@/pages/not-found";
 
 function App() {
+  // Define the user interface
+  interface User {
+    id: number;
+    username: string;
+    isAdmin: boolean;
+  }
+
   // Check user authentication status on app load
-  const { data: user } = useQuery({ 
+  const { data: user } = useQuery<User>({ 
     queryKey: ['/api/auth/me'],
     staleTime: 1000 * 60 * 5 // 5 minutes
   });
@@ -41,6 +50,8 @@ function App() {
       <Route path="/admin/projects" component={AdminProjectsPage} />
       <Route path="/admin/blog" component={AdminBlogPage} />
       <Route path="/admin/videos" component={AdminVideosPage} />
+      <Route path="/admin/messages" component={AdminMessagesPage} />
+      <Route path="/admin/settings" component={AdminSettingsPage} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useEffect } from "react";
 
 // Blog post form schema
 const blogPostSchema = z.object({
@@ -63,6 +64,19 @@ const BlogForm = ({ post, onSuccess }: BlogFormProps) => {
       category: post?.category || "",
     },
   });
+  
+  // Update form values when post changes (fixes edit mode)
+  useEffect(() => {
+    if (post) {
+      form.reset({
+        title: post.title || "",
+        content: post.content || "",
+        excerpt: post.excerpt || "",
+        imageUrl: post.imageUrl || "",
+        category: post.category || "",
+      });
+    }
+  }, [post, form]);
 
   // Create/update blog post mutation
   const blogPostMutation = useMutation({
