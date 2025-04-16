@@ -139,7 +139,11 @@ const AdminProjectsPage = () => {
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>{format(new Date(project.createdAt), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>
+                      {project.createdAt && !isNaN(new Date(project.createdAt).getTime())
+                        ? format(new Date(project.createdAt), 'MMM d, yyyy') 
+                        : 'N/A'}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button 
                         variant="ghost" 

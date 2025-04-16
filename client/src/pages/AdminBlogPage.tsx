@@ -137,8 +137,16 @@ const AdminBlogPage = () => {
                         {post.category}
                       </Badge>
                     </TableCell>
-                    <TableCell>{format(new Date(post.createdAt), 'MMM d, yyyy')}</TableCell>
-                    <TableCell>{format(new Date(post.updatedAt), 'MMM d, yyyy')}</TableCell>
+                    <TableCell>
+                      {post.createdAt && !isNaN(new Date(post.createdAt).getTime())
+                        ? format(new Date(post.createdAt), 'MMM d, yyyy') 
+                        : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {post.updatedAt && !isNaN(new Date(post.updatedAt).getTime())
+                        ? format(new Date(post.updatedAt), 'MMM d, yyyy') 
+                        : 'N/A'}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button 
                         variant="ghost" 
@@ -216,9 +224,13 @@ const AdminBlogPage = () => {
               <Badge className="mb-2 self-start">{selectedPost.category}</Badge>
               <DialogTitle className="text-2xl">{selectedPost.title}</DialogTitle>
               <DialogDescription>
-                Published: {format(new Date(selectedPost.createdAt), 'MMMM d, yyyy')}
+                Published: {selectedPost.createdAt && !isNaN(new Date(selectedPost.createdAt).getTime())
+                  ? format(new Date(selectedPost.createdAt), 'MMMM d, yyyy')
+                  : 'N/A'}
                 {" | "}
-                Updated: {format(new Date(selectedPost.updatedAt), 'MMMM d, yyyy')}
+                Updated: {selectedPost.updatedAt && !isNaN(new Date(selectedPost.updatedAt).getTime())
+                  ? format(new Date(selectedPost.updatedAt), 'MMMM d, yyyy')
+                  : 'N/A'}
               </DialogDescription>
             </DialogHeader>
             <div className="mt-4 space-y-4">

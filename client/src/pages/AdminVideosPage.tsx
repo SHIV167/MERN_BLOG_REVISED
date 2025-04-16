@@ -157,7 +157,9 @@ const AdminVideosPage = () => {
                 <div className="p-4">
                   <h3 className="font-semibold text-lg line-clamp-1">{video.title}</h3>
                   <p className="text-gray-500 text-sm mt-1">
-                    Added: {format(new Date(video.createdAt), 'MMM d, yyyy')}
+                    Added: {video.createdAt && !isNaN(new Date(video.createdAt).getTime())
+                      ? format(new Date(video.createdAt), 'MMM d, yyyy')
+                      : 'N/A'}
                   </p>
                   <p className="text-gray-600 mt-2 line-clamp-2">{video.description}</p>
                 </div>
@@ -201,7 +203,9 @@ const AdminVideosPage = () => {
                       <FaExternalLinkAlt className="ml-1 h-3 w-3" />
                     </a>
                   </TableCell>
-                  <TableCell>{format(new Date(video.createdAt), 'MMM d, yyyy')}</TableCell>
+                  <TableCell>{video.createdAt && !isNaN(new Date(video.createdAt).getTime())
+                    ? format(new Date(video.createdAt), 'MMM d, yyyy')
+                    : 'N/A'}</TableCell>
                   <TableCell className="text-right">
                     <Button 
                       variant="ghost" 
